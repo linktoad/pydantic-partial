@@ -26,7 +26,7 @@ class Error(BaseModel):
     input: Any = None
 
     @field_validator("field", mode="before")
-    def set_field_name_from_context(cls, v: Any, info: ValidationInfo):
+    def set_field_name_from_context(cls, v: Any, info: ValidationInfo) -> Any:
         return v or (info.context or {}).get(info.field_name)
 
 
@@ -34,7 +34,7 @@ class Errors(RootModel):
     root: list[Error] = []
 
 
-class MissingOrInvaidAllowed(BaseModel):
+class MissingOrInvaidAsNone(BaseModel):
     _errors: Errors = Errors()
 
     @model_validator(mode="before")
@@ -62,7 +62,7 @@ class MissingOrInvaidAllowed(BaseModel):
             # Pydantic has serialised the error input values for us. Lets use this instead!
 
     @model_validator(mode="after")
-    def save_errors_and_set_none(self) -> MissingOrInvaidAllowed:
+    def save_errors_and_set_none(self) -> MissingOrInvaidAsNone:
         for field in self.model_fields:
             value = getattr(self, field)
             if isinstance(value, Errors):
@@ -79,7 +79,7 @@ class MissingOrInvaidAllowed(BaseModel):
 if __name__ == "__main__":
     from datetime import datetime
 
-    class Model(MissingOrInvaidAllowed):
+    class Model(MissingOrInvaidAsNone):
         a: str
         b: datetime
         c: int

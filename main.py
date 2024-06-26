@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import (
     BaseModel,
@@ -9,6 +9,7 @@ from pydantic import (
     computed_field,
     ValidatorFunctionWrapHandler,
     ValidationInfo,
+    Field,
 )
 
 
@@ -19,9 +20,10 @@ class Error(BaseModel):
     field: str
     type: str = "missing"
     msg: str = "Field required"
+    input: Any = Field(default=None, exclude=True)
 
 
-class MissingOrInvaidAllowed(BaseModel):
+class MissingOrInvaidAsNone(BaseModel):
     _errors: list[Error] = []
 
     @model_validator(mode="before")
@@ -48,7 +50,7 @@ class MissingOrInvaidAllowed(BaseModel):
             return Error(field=info.field_name, **ex.errors()[0])
 
     @model_validator(mode="after")
-    def save_errors_and_set_none(self) -> MissingOrInvaidAllowed:
+    def save_errors_and_set_none(self) -> MissingOrInvaidAsNone:
         for field in self.model_fields:
             value = getattr(self, field)
             if isinstance(value, Error):
@@ -58,13 +60,13 @@ class MissingOrInvaidAllowed(BaseModel):
 
     @computed_field
     @property
-    def errors(self) -> Optional[list[dict]]:
-        return [error.model_dump() for error in self._errors] or None
+    def errors(self) -> list[Error]:
+        return self._errors
 
 
 if __name__ == "__main__":
 
-    class Model(MissingOrInvaidAllowed):
+    class Model(MissingOrInvaidAsNone):
         a: int
         b: bool
         c: str
