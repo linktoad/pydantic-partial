@@ -10,22 +10,24 @@ from pydantic import (
     computed_field,
     ValidatorFunctionWrapHandler,
     ValidationInfo,
+    ConfigDict,
 )
+
 
 SENTINEL = object()
 
 
 class Error(BaseModel):
-    field: str
+    model_config = ConfigDict(validate_default=True)
+
+    field: str = None
     type: str = "missing"
     msg: str = "Field required"
     input: Any = None
 
-    @model_validator(mode="before")
-    def get_field_name_from_context(cls, data: Any, info: ValidationInfo) -> Any:
-        if isinstance(data, dict) and info.context and info.context.get("field"):
-            return data | {"field": info.context.get("field")}
-        return data
+    @field_validator("field", mode="before")
+    def set_field_name_from_context(cls, v: Any, info: ValidationInfo):
+        return v or (info.context or {}).get(info.field_name)
 
 
 class Errors(RootModel):
@@ -57,6 +59,7 @@ class MissingOrInvaidAllowed(BaseModel):
             return handler(v)
         except ValidationError as ex:
             return Errors.model_validate_json(ex.json(), context={"field": info.field_name})
+            # Pydantic has serialised the error input values for us. Lets use this instead!
 
     @model_validator(mode="after")
     def save_errors_and_set_none(self) -> MissingOrInvaidAllowed:
@@ -82,13 +85,17 @@ if __name__ == "__main__":
         c: int
         d: float
         e: bool
+        f: tuple
+        g: list
 
     data = {
-        "a": 3,
+        "a": "this passes!",
         "b": False,
         "c": "foo",
         "d": None,
         "e": datetime.now(),
+        "f": TypeError,
+        # "g": [],
     }
 
     m = Model.model_validate(data)
@@ -98,18 +105,14 @@ if __name__ == "__main__":
 
     """
     {
-        "a": null,
+        "a": "this passes!",
         "b": null,
         "c": null,
         "d": null,
         "e": null,
+        "f": null,
+        "g": null,
         "errors": [
-            {
-                "field": "a",
-                "type": "string_type",
-                "msg": "Input should be a valid string",
-                "input": 3
-            },
             {
                 "field": "b",
                 "type": "datetime_type",
@@ -124,15 +127,27 @@ if __name__ == "__main__":
             },
             {
                 "field": "d",
-                "type": "float_parsing",
-                "msg": "Input should be a valid number, unable to parse string as a number",
-                "input": "bar"
+                "type": "float_type",
+                "msg": "Input should be a valid number",
+                "input": null
             },
             {
                 "field": "e",
                 "type": "bool_type",
                 "msg": "Input should be a valid boolean",
-                "input": "2024-06-26T12:17:14.329990"
+                "input": "2024-06-26T15:57:33.276163"
+            },
+            {
+                "field": "f",
+                "type": "tuple_type",
+                "msg": "Input should be a valid tuple",
+                "input": "<class 'TypeError'>"
+            },
+            {
+                "field": "g",
+                "type": "missing",
+                "msg": "Field required",
+                "input": null
             }
         ]
     }
