@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import (
     BaseModel,
@@ -23,9 +23,9 @@ class Error(BaseModel):
 
     @model_validator(mode="before")
     def get_field_name_from_context(cls, data: Any, info: ValidationInfo) -> Any:
-        if not isinstance(data, dict):
-            return data
-        return {"field": (info.context or {}).get("field")} | data
+        if isinstance(data, dict) and info.context and info.context.get("field"):
+            return data | {"field": info.context.get("field")}
+        return data
 
 
 class Errors(RootModel):
@@ -69,8 +69,8 @@ class MissingOrInvaidAllowed(BaseModel):
 
     @computed_field
     @property
-    def errors(self) -> Optional[Errors]:
-        return self._errors if self._errors.root else None
+    def errors(self) -> Errors:
+        return self._errors
 
 
 if __name__ == "__main__":
@@ -87,14 +87,14 @@ if __name__ == "__main__":
         "a": 3,
         "b": False,
         "c": "foo",
-        "d": "bar",
+        "d": None,
         "e": datetime.now(),
     }
 
     m = Model.model_validate(data)
     print(m.model_dump_json(indent=4))
 
-    # And then can just insert m.errors.model_dump_json() ::JSONB
+    # And then can just insert m.errors.model_dump_json() if m.errors.root else None ::JSONB
 
     """
     {
