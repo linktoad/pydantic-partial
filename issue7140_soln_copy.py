@@ -1,8 +1,3 @@
-"""
-A solution to https://github.com/pydantic/pydantic/issues/7140
-"""
-
-from __future__ import annotations
 from typing import Any, Type, Optional
 
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
@@ -13,15 +8,7 @@ SENTINEL = object()
 def validate_model(
     model: Type[BaseModel], input_data: Any
 ) -> tuple[dict[str, Any], set[str], Optional[ValidationError]]:
-    """
-    Pydantic V2 implementation of the core bits of Pydantic V1's `validate_model`.
-    https://github.com/pydantic/pydantic/blob/0454fabbc116ea78df0e29756a122cdbeba631d8/pydantic/v1/main.py#L1032
-
-    Returns:
-        `values`: A dict containing the validated data.
-        `fields_set`: The set of field names which passed validation.
-        `ValidationError | None`: `ValidationError` if there were errors.
-    """
+    """Pydantic V2 implementation of the core bits of Pydantic V1's `validate_model`"""
 
     class Model_(model, PartialModel):
         pass
@@ -58,14 +45,12 @@ class PartialModel(BaseModel):
             return (SENTINEL, ex.errors()[0] | dict(loc=(info.field_name,)))
 
     @model_validator(mode="after")
-    def build_model_validation_error(self) -> PartialModel:
+    def build_model_validation_error(self) -> "PartialModel":
         if self.invalid_fields:
             self._validation_error = ValidationError.from_exception_data(
                 title=type(self).__bases__[0].__name__,
                 line_errors=[getattr(self, field)[1] for field in self.invalid_fields],
             )
-        for field in self.invalid_fields:  # Don't show invalids in model repr.
-            self.model_fields[field].repr = False  # Not core logic but it's pretty neat.
         return self
 
     @property
@@ -78,29 +63,29 @@ class PartialModel(BaseModel):
 
 
 if __name__ == "__main__":
+    from datetime import datetime
 
     class Model(BaseModel):
-        a: str
+        a: datetime
         b: int
         c: bool
-        d: float
+        d: str
 
 
-    data = {"a": "foo", "b": TypeError, "d": True}
+    data = {
+        "a": "2024-06-27",
+        "b": "satoshi",
+        "c": "on",
+        # "d": 10
+    }
 
     a, b, c = validate_model(Model, data)
 
-    """
-    >>> a
-    {'a': 'foo', 'd': 1.0}
-    >>> b
-    {'d', 'a'}
-    >>> c
-    2 validation errors for Model
-    b
-    Input should be a valid integer [type=int_type, input_value=<class 'TypeError'>, input_type=type]
-        For further information visit https://errors.pydantic.dev/2.7/v/int_type
-    c
-    Field required [type=missing, input_value={'a': 'foo', 'b': <class 'TypeError'>, 'd': True}, input_type=dict]
-        For further information visit https://errors.pydantic.dev/2.7/v/missing
-    """
+    print(a)
+    print(b)
+    print(c)
+
+    try:
+        Model.model_validate(data)
+    except Exception as ex:
+        print(ex)
