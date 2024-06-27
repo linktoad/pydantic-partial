@@ -79,7 +79,7 @@ class PartialModel(BaseModel):
 
 if __name__ == "__main__":
 
-    class Model(PartialModel):
+    class Model(BaseModel):
         a: str
         b: int
         c: bool
