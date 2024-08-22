@@ -1,17 +1,17 @@
 from __future__ import annotations
+
 from typing import Any
 
 from pydantic import (
     BaseModel,
+    Field,
     ValidationError,
+    ValidationInfo,
+    ValidatorFunctionWrapHandler,
+    computed_field,
     field_validator,
     model_validator,
-    computed_field,
-    ValidatorFunctionWrapHandler,
-    ValidationInfo,
-    Field,
 )
-
 
 SENTINEL = object()
 
@@ -51,8 +51,7 @@ class MissingOrInvaidAsNone(BaseModel):
 
     @model_validator(mode="after")
     def save_errors_and_set_none(self) -> MissingOrInvaidAsNone:
-        for field in self.model_fields:
-            value = getattr(self, field)
+        for field, value in self:
             if isinstance(value, Error):
                 self._errors.append(value)
                 setattr(self, field, None)  # Could set it to anything you want for your app

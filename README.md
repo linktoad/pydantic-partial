@@ -17,3 +17,9 @@ See [applications.py](https://github.com/linktoad/pydantic-partial/blob/main/app
 ## Notes
 
 **Requires Python3.9+**
+
+## Acknowledgements
+
+I'd like to express my appreciation to Fred Baptiste from MathByte Academy for creating a tutorial on this technique.
+
+You can find the video here: [https://www.youtube.com/watch?v=BtyA-mN0VIA](https://www.youtube.com/watch?v=BtyA-mN0VIA)

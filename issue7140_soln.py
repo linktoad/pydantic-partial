@@ -3,7 +3,8 @@ A solution to https://github.com/pydantic/pydantic/issues/7140
 """
 
 from __future__ import annotations
-from typing import Any, Type, Optional
+
+from typing import Any, Optional, Type
 
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
@@ -84,7 +85,6 @@ if __name__ == "__main__":
         b: int
         c: bool
         d: float
-
 
     data = {"a": "foo", "b": TypeError, "d": True}
 
