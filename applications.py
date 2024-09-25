@@ -27,7 +27,7 @@ class Error(BaseModel):
 
     @field_validator("field", mode="before")
     def set_field_name_from_context(cls, v: Any, info: ValidationInfo) -> Any:
-        return v or (info.context or {}).get(info.field_name)
+        return v or info.context
 
 
 class Errors(RootModel):
@@ -58,7 +58,7 @@ class MissingOrInvaidAsNone(BaseModel):
         try:
             return handler(v)
         except ValidationError as ex:
-            return Errors.model_validate_json(ex.json(), context={"field": info.field_name})
+            return Errors.model_validate_json(ex.json(), context=info.field_name)
             # Pydantic has serialised the error input values for us. Lets use this instead!
 
     @model_validator(mode="after")
