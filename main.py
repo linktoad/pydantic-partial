@@ -23,7 +23,7 @@ class Error(BaseModel):
     input: Any = Field(default=None, exclude=True)
 
 
-class MissingOrInvaidAsNone(BaseModel):
+class MissingOrInvalidAsNone(BaseModel):
     _errors: list[Error] = []
 
     @model_validator(mode="before")
@@ -50,7 +50,7 @@ class MissingOrInvaidAsNone(BaseModel):
             return Error(field=info.field_name, **ex.errors()[0])
 
     @model_validator(mode="after")
-    def save_errors_and_set_none(self) -> MissingOrInvaidAsNone:
+    def save_errors_and_set_none(self) -> MissingOrInvalidAsNone:
         for field, value in self:
             if isinstance(value, Error):
                 self._errors.append(value)
@@ -65,7 +65,7 @@ class MissingOrInvaidAsNone(BaseModel):
 
 if __name__ == "__main__":
 
-    class Model(MissingOrInvaidAsNone):
+    class Model(MissingOrInvalidAsNone):
         a: int
         b: bool
         c: str

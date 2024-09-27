@@ -20,6 +20,6 @@ See [applications.py](https://github.com/linktoad/pydantic-partial/blob/main/app
 
 ## Acknowledgements
 
-I'd like to express my appreciation to Fred Baptiste from MathByte Academy for sharing this technique.
+I'd like to express my appreciation to Fred Baptiste from MathByte Academy for sharing this technique and repository.
 
 You can find the video here: [https://www.youtube.com/watch?v=BtyA-mN0VIA](https://www.youtube.com/watch?v=BtyA-mN0VIA)
